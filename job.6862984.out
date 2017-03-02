@@ -1,0 +1,21 @@
+Size = 120
+
+Start Index: 0, End Index: 24 for World Rank 1
+Size = 120
+
+Start Index: 24, End Index: 48 for World Rank 2
+Size = 120
+
+Start Index: 48, End Index: 72 for World Rank 3
+Size = 120
+
+Start Index: 72, End Index: 96 for World Rank 4
+Size = 120
+
+Start Index: 96, End Index: 120 for World Rank 5
+Total latin squares: 161280Number of tasks= 6 My rank= 0 Running on c0322.crane.hcc.unl.edu
+Number of tasks= 6 My rank= 5 Running on c0322.crane.hcc.unl.edu
+Number of tasks= 6 My rank= 1 Running on c0322.crane.hcc.unl.edu
+Number of tasks= 6 My rank= 3 Running on c0322.crane.hcc.unl.edu
+Number of tasks= 6 My rank= 4 Running on c0322.crane.hcc.unl.edu
+Number of tasks= 6 My rank= 2 Running on c0322.crane.hcc.unl.edu
