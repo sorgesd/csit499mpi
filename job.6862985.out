@@ -187,3 +187,6 @@ Start Index: 12800, End Index: 13440 for World Rank 21
 Start Index: 5120, End Index: 5760 for World Rank 9
 
 Start Index: 19200, End Index: 19840 for World Rank 31
+--------------------------------------------------------------------------
+mpirun noticed that process rank 39 with PID 132414 on node c0723 exited on signal 9 (Killed).
+--------------------------------------------------------------------------
