@@ -10,20 +10,16 @@
 #include <cstddef>
 #include <unistd.h>
 #include <fstream>
-typedef struct cell {
-        int value;
-        int constraint;
-		char c;
-} cell;
 
 using namespace std;
 void permute(list<list<int>> *result, list<int> current, list<int> left);
 list<list<int>> permutations;
-int algorithm(int number);
 int factorial(int number);
-cell * genLists(int number, int * size);
+void genLists(int number, int * size);
 int number = 6;
+string filePath = "/work/csit499unk/sorgesd/csit499mpi/latinsquare6x128.txt";
 
+int printLatinSquares(list<list<list<int>>> returnableLatinSquares);
 list<list<list<int>>> getLatinSquares(list<int> startingLine); 
 list<list<list<int>>> addLines(list<list<int>> setLines, list<list<int>> possibilities);
 list<list<int>> filterPossibilities(list<list<int>> setLines, list<list<int>> possibilites);
@@ -39,28 +35,13 @@ int main(int argc, char *argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 	int world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
-    const int    nitems=3;
-    int          blocklengths[3] = {1,1,1};
-    MPI_Datatype types[3] = {MPI_INT, MPI_INT,MPI_CHAR};
-    MPI_Datatype mpi_cell_type;
-    MPI_Aint     offsets[3];
-
-    offsets[0] = offsetof(cell, value);
-    offsets[1] = offsetof(cell, constraint);
-    offsets[2] = offsetof(cell, c);
-
-    MPI_Type_create_struct(nitems, blocklengths, offsets, types, &mpi_cell_type);
-    MPI_Type_commit(&mpi_cell_type);
-	
-	
-	
+		
 	int init;
 	int * array;
 	int size;
-	cell * cellArray;
+	// cell * cellArray;
 	int returnSize;
-
+/**
 	if (world_rank == 0)
 		{
 		
@@ -73,7 +54,7 @@ int main(int argc, char *argv[])
 			
 		// list<list<list<int>>> latinSquares = getLatinSquares(line);
 		
-		/*for (list<list<int>> ls : latinSquares) {
+		for (list<list<int>> ls : latinSquares) {
 			for (list<int> line : ls) {
 				for (int i : line) {
 					printf("%d,", i);	
@@ -81,16 +62,16 @@ int main(int argc, char *argv[])
 				cout << endl;
 			}
 			cout << endl;
-		}*/	
+		}	
 	}
-		
+*/		
 	//MPI_Bcast(&size,  1,    MPI_INT,0,MPI_COMM_WORLD);
 	//MPI_Bcast(cellArray, size, mpi_cell_type, 0, MPI_COMM_WORLD);
 	int lines;
 	if (world_rank == 0)
 		{
 			ofstream myfile;
-                        myfile.open ("/work/csit499unk/sorgesd/csit499mpi/latinsquare128.txt");
+                        myfile.open (filePath);
 			myfile << "";
 			myfile.close();
 			init = 1; //send the size first
@@ -135,9 +116,9 @@ int main(int argc, char *argv[])
 			//float workers = world_size-1.0;
 			float rank = world_rank -1.0;
 			
+			genLists(number, &size);
+			
     			MPI_Recv(&number, 1, MPI_INT, 0, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-		
-			cellArray = genLists(number, &size);
 	
 			int workers = world_size - 1;
                         if (workers == 0) {
@@ -161,36 +142,18 @@ int main(int argc, char *argv[])
 			
 			list<list<int>> worldLines (permutations);
 
-			list<list<list<int>>> returnableLatinSquares;
+			returnSize = 0; 
+			//list<list<list<int>>> returnableLatinSquares;
 			for (int i = 0; i < factorial(number); i++) {
 				if (i < startIndex) {
 					worldLines.pop_front();
 				} else if (i < endIndex) {
-					returnableLatinSquares.splice(returnableLatinSquares.end(), getLatinSquares(worldLines.front()));
+					returnSize += printLatinSquares(getLatinSquares(worldLines.front()));
+					cout << world_rank  << ":" << returnSize << "\n";
 					worldLines.pop_front();
 				}		
 			}
 			
-
-			ofstream myfile;
-			myfile.open ("/work/csit499unk/sorgesd/csit499mpi/latinsquare128.txt", ios::app);
-			if (!myfile.is_open()) {
-				sleep(1000);
-				myfile.open ("/work/csit499unk/sorgesd/csit499mpi/latinsquare128.txt", ios::app);
-			}
-			
-			for (list<list<int>> x : returnableLatinSquares) {
-				for (list<int> i : x) {
-					for (int i2 : i) {
-						myfile << i2 << " ";
-					}
-					myfile << "\n";
-				}
-				myfile << "\n";
-			}
- 			myfile.close();
-
-			returnSize = returnableLatinSquares.size();
 			MPI_Send(&returnSize, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
 		}
 	printf ("Number of tasks= %d My rank= %d Running on %s\n", world_size,world_rank,hostname);
@@ -198,30 +161,50 @@ int main(int argc, char *argv[])
    // done with MPI
    MPI_Finalize();
    }
- 
- 
-   
-cell * genLists(int number, int * size)
+
+int printLatinSquares(list<list<list<int>>> returnableLatinSquares) {
+	 cout << "print latin squares\n";
+		ofstream myfile;
+                        myfile.open (filePath, ios::app);
+                        if (!myfile.is_open()) {
+                                sleep(100);
+                                myfile.open (filePath, ios::app);
+                        }
+
+                        for (list<list<int>> x : returnableLatinSquares) {
+                                for (list<int> i : x) {
+                                        for (int i2 : i) {
+                                                myfile << i2 << " ";
+                                        }
+                                        myfile << "\n";
+                                }
+                                myfile << "\n";
+                        }
+                        myfile.close();
+	return returnableLatinSquares.size();
+}
+    
+void genLists(int number, int * size)
 	{
-		cell * cellArray;
-		int gridsize = number * number;
-		int *array = (int *)malloc(sizeof(int) * gridsize);
+		//cell * cellArray;
+		//int gridsize = number * number;
+		//int *array = (int *)malloc(sizeof(int) * gridsize);
 		list<int> l;
 		for(int i = 0; i < number; i++)
 		{
 			l.push_back(i);
 		}
-		for(int i = 1; i < number * number;i++)
-		{
-			array[i] = -1;
-		}
+		//for(int i = 1; i < number * number;i++)
+		//{
+		//	array[i] = -1;
+		//}
 		//an algorithm goes here!!
 		//algorithm(number);
 		list<list<int>> result;
 		list<int> empty;
 		permute(&result,empty, l);  
-		*size = result.size() * number;
-		cellArray = (cell *)malloc(sizeof(cell) * number * result.size());
+		//*size = result.size() * number;
+		/*cellArray = (cell *)malloc(sizeof(cell) * number * result.size());
 		int index = 0;
 		for(list<int> l : result)
 		{
@@ -231,12 +214,12 @@ cell * genLists(int number, int * size)
 					index++;
 					//cout<<index << " " << lvalue << endl;
 			}
-		}
+		}**/
 		
 		cout <<"Size = "<< result.size()<< endl;
-		return cellArray;
 	} 
- 
+
+
 /* print permutations of string */
 void permute(list<list<int>> *result, list<int> current, list<int> left)
 {
