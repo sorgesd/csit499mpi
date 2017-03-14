@@ -8,6 +8,8 @@
 #include <iostream>
 #include <string>
 #include <cstddef>
+#include <unistd.h>
+#include <fstream>
 typedef struct cell {
         int value;
         int constraint;
@@ -20,7 +22,7 @@ list<list<int>> permutations;
 int algorithm(int number);
 int factorial(int number);
 cell * genLists(int number, int * size);
-int number = 8;
+int number = 6;
 
 list<list<list<int>>> getLatinSquares(list<int> startingLine); 
 list<list<list<int>>> addLines(list<list<int>> setLines, list<list<int>> possibilities);
@@ -61,6 +63,7 @@ int main(int argc, char *argv[])
 
 	if (world_rank == 0)
 		{
+		
 		//	printf("Enter the number:");
 		//	scanf("%d", &number);
 
@@ -86,6 +89,10 @@ int main(int argc, char *argv[])
 	int lines;
 	if (world_rank == 0)
 		{
+			ofstream myfile;
+                        myfile.open ("/work/csit499unk/sorgesd/csit499mpi/latinsquare128.txt");
+			myfile << "";
+			myfile.close();
 			init = 1; //send the size first
 			int workers = world_size - 1;
 			if (workers == 0) {
@@ -163,6 +170,26 @@ int main(int argc, char *argv[])
 					worldLines.pop_front();
 				}		
 			}
+			
+
+			ofstream myfile;
+			myfile.open ("/work/csit499unk/sorgesd/csit499mpi/latinsquare128.txt", ios::app);
+			if (!myfile.is_open()) {
+				sleep(1000);
+				myfile.open ("/work/csit499unk/sorgesd/csit499mpi/latinsquare128.txt", ios::app);
+			}
+			
+			for (list<list<int>> x : returnableLatinSquares) {
+				for (list<int> i : x) {
+					for (int i2 : i) {
+						myfile << i2 << " ";
+					}
+					myfile << "\n";
+				}
+				myfile << "\n";
+			}
+ 			myfile.close();
+
 			returnSize = returnableLatinSquares.size();
 			MPI_Send(&returnSize, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
 		}
