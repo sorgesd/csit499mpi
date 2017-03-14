@@ -16,8 +16,8 @@ void permute(list<int> current, list<int> left);
 list<list<int>> permutations;
 int factorial(int number);
 void genLists(int number, int * size);
-int number = 4;
-string filePath = "/work/csit499unk/sorgesd/csit499mpi/latinsquare4final.txt";
+int number = 6;
+string filePath = "/work/csit499unk/sorgesd/csit499mpi/latinsquare6final.txt";
 
 int printLatinSquares(list<list<list<int>>> returnableLatinSquares);
 list<list<list<int>>> getLatinSquares(list<int> startingLine); 
