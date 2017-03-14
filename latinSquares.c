@@ -12,12 +12,12 @@
 #include <fstream>
 
 using namespace std;
-void permute(list<list<int>> *result, list<int> current, list<int> left);
+void permute(list<int> current, list<int> left);
 list<list<int>> permutations;
 int factorial(int number);
 void genLists(int number, int * size);
-int number = 6;
-string filePath = "/work/csit499unk/sorgesd/csit499mpi/latinsquare6x128.txt";
+int number = 4;
+string filePath = "/work/csit499unk/sorgesd/csit499mpi/latinsquare4final.txt";
 
 int printLatinSquares(list<list<list<int>>> returnableLatinSquares);
 list<list<list<int>>> getLatinSquares(list<int> startingLine); 
@@ -39,75 +39,35 @@ int main(int argc, char *argv[])
 	int init;
 	int * array;
 	int size;
-	// cell * cellArray;
 	int returnSize;
-/**
-	if (world_rank == 0)
-		{
-		
-		//	printf("Enter the number:");
-		//	scanf("%d", &number);
-
-		//	cellArray = genLists(number, &size);
-		
-		//	list<int> line = permutations.front();  
-			
-		// list<list<list<int>>> latinSquares = getLatinSquares(line);
-		
-		for (list<list<int>> ls : latinSquares) {
-			for (list<int> line : ls) {
-				for (int i : line) {
-					printf("%d,", i);	
-				}			
-				cout << endl;
-			}
-			cout << endl;
-		}	
-	}
-*/		
-	//MPI_Bcast(&size,  1,    MPI_INT,0,MPI_COMM_WORLD);
-	//MPI_Bcast(cellArray, size, mpi_cell_type, 0, MPI_COMM_WORLD);
 	int lines;
 	if (world_rank == 0)
 		{
+			// Create the output file
 			ofstream myfile;
                         myfile.open (filePath);
 			myfile << "";
 			myfile.close();
+
 			init = 1; //send the size first
 			int workers = world_size - 1;
 			if (workers == 0) {
 				printf("WARNING: No additional workers");
 				workers = 1;
 			}
-			//printf("size %d", sizeof(permutations)/sizeof(permutations.front()));
+			
 			int factInt = factorial(number);
-			lines = (factInt / workers);
-			if (factInt % workers > 0) {
-				lines += 1;
-			}
 			for(int i= 1; i < world_size; i++)
 			{
-			//	int arraySize = number * lines;
-			//	cell *lineSet = (cell *) malloc(sizeof(cell) * arraySize);
-    				//lineArray = (int *) malloc(sizeof(int) * arraySize
-				MPI_Send(&number, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-				
+				// Send size of latin square
+				MPI_Send(&number, 1, MPI_INT, i, 0, MPI_COMM_WORLD);	
 			}
 			array = (int *) malloc(sizeof(int) * number * number);
 			int totalLatinSquares = 0;
 			for(int i= 1; i < world_size; i++)
 			{
 			MPI_Recv(&returnSize,1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-//				cout << i;
-//				cout << endl;
-//				cout << returnSize;
 				totalLatinSquares += returnSize;
-				/* char del = ' ';
-				for(int i = 0; i < number*number; i++)
-				{
-					del = ',';
-				}*/
 			}
 			printf("Total latin squares: %d", totalLatinSquares);
 		} else if (world_rank != 0) 
@@ -115,7 +75,7 @@ int main(int argc, char *argv[])
 			
 			//float workers = world_size-1.0;
 			float rank = world_rank -1.0;
-			
+			// Generate list of lines, permutations, for each world
 			genLists(number, &size);
 			
     			MPI_Recv(&number, 1, MPI_INT, 0, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
@@ -125,13 +85,15 @@ int main(int argc, char *argv[])
                                 printf("WARNING: No additional workers");
                                 workers = 1;
                         }
-                        //printf("size %d", sizeof(permutations)/sizeof(permutations.front()));
+                        // Calculate the total number of lines and the portion this world_rank is responsible for
                         int factInt = factorial(number);
                         lines = (factInt / workers);
-                        if (factInt % workers > 0) {
+                        // If there are more than can be evenly distributed, just add one to each world
+			if (factInt % workers > 0) {
                                 lines += 1;
                         }
-
+			
+			// Determine lines this world is responsible
 			int startIndex = (world_rank - 1) * lines;	
 			int endIndex = world_rank * lines;
 			
@@ -143,7 +105,7 @@ int main(int argc, char *argv[])
 			list<list<int>> worldLines (permutations);
 
 			returnSize = 0; 
-			//list<list<list<int>>> returnableLatinSquares;
+			// Create a list of latin squares representing all combinations beginning with the lines assigned to the world
 			for (int i = 0; i < factorial(number); i++) {
 				if (i < startIndex) {
 					worldLines.pop_front();
@@ -163,77 +125,51 @@ int main(int argc, char *argv[])
    }
 
 int printLatinSquares(list<list<list<int>>> returnableLatinSquares) {
-	 cout << "print latin squares\n";
-		ofstream myfile;
-                        myfile.open (filePath, ios::app);
-                        if (!myfile.is_open()) {
-                                sleep(100);
-                                myfile.open (filePath, ios::app);
-                        }
-
+	 
+	cout << "print latin squares\n";
+			string printable ("");
                         for (list<list<int>> x : returnableLatinSquares) {
                                 for (list<int> i : x) {
                                         for (int i2 : i) {
-                                                myfile << i2 << " ";
+                                                printable += to_string(i2) + " ";
                                         }
-                                        myfile << "\n";
+                                        printable += "\n";
                                 }
-                                myfile << "\n";
+                                printable += "\n";
                         }
+			ofstream myfile;
+			myfile.open(filePath, ios::app);
+			if (!myfile.is_open()) {
+                                sleep(100);
+                                myfile.open (filePath, ios::app);
+                        }
+			myfile << printable;
                         myfile.close();
 	return returnableLatinSquares.size();
 }
     
 void genLists(int number, int * size)
 	{
-		//cell * cellArray;
-		//int gridsize = number * number;
-		//int *array = (int *)malloc(sizeof(int) * gridsize);
 		list<int> l;
+		// Generate a list of numbers, 0 - n
 		for(int i = 0; i < number; i++)
 		{
 			l.push_back(i);
 		}
-		//for(int i = 1; i < number * number;i++)
-		//{
-		//	array[i] = -1;
-		//}
-		//an algorithm goes here!!
-		//algorithm(number);
-		list<list<int>> result;
 		list<int> empty;
-		permute(&result,empty, l);  
-		//*size = result.size() * number;
-		/*cellArray = (cell *)malloc(sizeof(cell) * number * result.size());
-		int index = 0;
-		for(list<int> l : result)
-		{
-			for(int lvalue: l)
-			{
-					cellArray[index].value = lvalue;	
-					index++;
-					//cout<<index << " " << lvalue << endl;
-			}
-		}**/
+		// Get all line permutations of numbers
+		permute(empty, l);  
 		
-		cout <<"Size = "<< result.size()<< endl;
+		cout <<"Size = "<< permutations.size()<< endl;
 	} 
 
 
-/* print permutations of string */
-void permute(list<list<int>> *result, list<int> current, list<int> left)
+/* Recursively get all line permustations for a given set of numbers, left */
+void permute(list<int> current, list<int> left)
 {
 	if(left.empty())
 	{
-//		cout <<"Size = "<< result->size()<< endl;
-		result->push_front(current);	
 		permutations.push_front(current);
-//		cout <<"Size = "<< result->size()<< endl;
-		for(int j: current)
-		{
-			//cout << j << ",";
-		}
-		//cout << endl;
 	}
 	else
 	{
@@ -244,34 +180,31 @@ void permute(list<list<int>> *result, list<int> current, list<int> left)
 			list<int> newleft (left);
 			newleft.remove(i);
 			newCurrent.push_back(i);
-			permute(result,newCurrent,newleft);
+			permute(newCurrent,newleft);
 		}
 	}
 }
 
-int getIndex(int row, int col, int size)
-{
-	int result = (row * size)+ col;
-	return result;
-}
-
+// Get all latin square combinations for a set starting line
 list<list<list<int>>> getLatinSquares(list<int> startingLine) {
-	//list<list<list<int>>> latinSquares;
 	list<list<int>> possibleLines (permutations);
 	list<list<int>> setLines;
 	setLines.push_back(startingLine);
 	return addLines(setLines, possibleLines);
 }
 
+// Recursively retreive all remaining combinations for a partially generated list, where setLines are the currently generated list and possibilities are the remaining line combinations
 list<list<list<int>>> addLines(list<list<int>> setLines, list<list<int>> possibilities) {
 	list<list<int>> filteredPossibilities = filterPossibilities(setLines, possibilities);
 	
 	list<list<list<int>>> latinSquares;
 
 	if (filteredPossibilities.size() == 1) {
+		// If only one possible line is left, complete the latin square
 		setLines.push_back(filteredPossibilities.front());
 		latinSquares.push_back(setLines);
 	} else {
+		// Pass each possible next line to generate "more complete" latin squares
 		for(list<int> line: filteredPossibilities) {
 			list<list<int>> newSetLines (setLines);
 			newSetLines.push_back(line);
@@ -283,15 +216,19 @@ list<list<list<int>>> addLines(list<list<int>> setLines, list<list<int>> possibi
 	return latinSquares;
 }
 
+// Remove all lines that conflict with any of the currently set lines
 list<list<int>> filterPossibilities(list<list<int>> setLines, list<list<int>> possibilities) {
 	list<list<int>> fList;
 	for(list<int> pLine: possibilities) {
 		bool conflict = false;
 		for(list<int> sLine: setLines) {
+			// Check every possible row in each set line against the possible line
 			for(int i =0; i < sLine.size(); i++) {
+				// If the front value is equal, mark the line as a conflict that will not be returned
 				if (sLine.front() == pLine.front()) {
 					conflict = true;
 				}
+				// Rotate through each character to compare all values and maintain line integrity
 				int temp = sLine.front();
 				sLine.pop_front();
 				sLine.push_back(temp);
